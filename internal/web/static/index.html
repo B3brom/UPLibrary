@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Магазин одежды</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <header>
+    <h1>Магазин одежды</h1>
+    <nav>
+      <button data-tab="catalog" class="tab active">Каталог</button>
+      <button data-tab="cart" class="tab">Корзина</button>
+      <button data-tab="orders" class="tab">Заказы</button>
+      <button data-tab="admin" class="tab" id="admin-tab" style="display:none">Управление</button>
+    </nav>
+    <div class="auth">
+      <button id="open-auth-btn">Войти / Регистрация</button>
+      <button id="logout" style="display:none">Выйти</button>
+      <span id="whoami"></span>
+      <span id="balance-display" style="display:none">
+        Баланс: <b id="balance-value">0</b> ₽
+        <button id="topup-btn">Пополнить</button>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <section id="catalog" class="panel active">
+      <h2>Каталог товаров</h2>
+      <form id="filters">
+        <input name="q" placeholder="Поиск" style="min-width: 220px">
+        <select name="gender">
+          <option value="">Пол</option>
+          <option value="M">Мужской</option>
+          <option value="W">Женский</option>
+          <option value="U">Унисекс</option>
+        </select>
+        <select name="size">
+          <option value="">Размер</option>
+          <option>XS</option>
+          <option>S</option>
+          <option>M</option>
+          <option>L</option>
+          <option>XL</option>
+        </select>
+        <input name="brand" placeholder="Бренд">
+        <fieldset class="season-filter">
+          <legend>Сезон:</legend>
+          <label><input type="checkbox" name="season" value="Зима"> Зима</label>
+          <label><input type="checkbox" name="season" value="Весна"> Весна</label>
+          <label><input type="checkbox" name="season" value="Лето"> Лето</label>
+          <label><input type="checkbox" name="season" value="Осень"> Осень</label>
+          <label><input type="checkbox" name="season" value="Демисезон"> Демисезон</label>
+        </fieldset>
+        <select name="sort_price">
+          <option value="">Цена</option>
+          <option value="asc">↑ по возрастанию</option>
+          <option value="desc">↓ по убыванию</option>
+        </select>
+        <button type="submit">Применить</button>
+        <button type="button" id="reset-filters">Сброс</button>
+      </form>
+      <div id="products" class="grid"></div>
+    </section>
+
+    <section id="cart" class="panel">
+      <h2>Корзина</h2>
+      <p class="hint" id="cart-hint">Войдите или зарегистрируйтесь, чтобы пользоваться корзиной.</p>
+      <div id="cart-items"></div>
+      <button id="checkout">Оформить заказ</button>
+    </section>
+
+    <section id="orders" class="panel">
+      <h2>Заказы</h2>
+      <div id="orders-list"></div>
+    </section>
+
+    <section id="admin" class="panel">
+      <h2 id="product-form-title">Добавить товар</h2>
+      <form id="add-product" class="grid-form">
+        <input type="hidden" name="id">
+        <input name="name" placeholder="Название" required>
+        <input name="type" placeholder="Тип">
+        <select name="gender">
+          <option value="">Пол</option>
+          <option value="M">M</option>
+          <option value="W">W</option>
+          <option value="U">U</option>
+        </select>
+        <select name="size">
+          <option value="">Размер</option>
+          <option>XS</option>
+          <option>S</option>
+          <option>M</option>
+          <option>L</option>
+          <option>XL</option>
+        </select>
+        <input name="color" placeholder="Цвет">
+        <input name="brand" placeholder="Бренд">
+        <select name="season">
+          <option value="">Сезон</option>
+          <option value="Зима">Зима</option>
+          <option value="Весна">Весна</option>
+          <option value="Лето">Лето</option>
+          <option value="Осень">Осень</option>
+          <option value="Демисезон">Демисезон</option>
+        </select>
+        <input name="price" type="number" step="0.01" min="0" placeholder="Цена" required>
+        <input name="quantity" type="number" min="0" value="0" placeholder="Количество на складе">
+        <input name="description" placeholder="Описание">
+        <label
+          style="grid-column: 1/-1; font-size: .85rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          Фото товара (можно несколько):
+          <input type="file" id="new-product-photo" accept="image/*" multiple>
+        </label>
+        <button type="submit" id="product-submit">Создать</button>
+        <button type="button" id="product-cancel" style="display:none">Отмена</button>
+      </form>
+
+      <div id="product-photos-block" style="display:none">
+        <h3>Фотографии товара</h3>
+        <div id="product-photos"></div>
+        <form id="upload-photo">
+          <input type="file" id="photo-file" accept="image/*" required>
+          <button type="submit">Загрузить фото</button>
+        </form>
+      </div>
+
+      <h2>Импорт товаров (JSON)</h2>
+      <form id="import-products">
+        <input type="file" id="import-file" accept=".json,application/json" required>
+        <button type="submit">Импортировать</button>
+      </form>
+
+      <div id="admin-only-block">
+        <h2>Пользователи</h2>
+        <button id="open-users-btn">Управление пользователями</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Модалка входа/регистрации -->
+  <div id="auth-modal" class="modal" style="display:none" onclick="if(event.target===this)closeAuth()">
+    <div class="modal-content" style="max-width: 440px">
+      <span class="modal-close" onclick="closeAuth()">×</span>
+      <div class="auth-switch">
+        <button id="show-login" class="active">Войти</button>
+        <button id="show-register">Регистрация</button>
+      </div>
+      <form id="login-form" class="auth-form">
+        <input id="login-email" type="email" placeholder="Электронная почта" required>
+        <input id="login-password" type="password" placeholder="Пароль" required>
+        <button type="submit" id="login">Войти</button>
+      </form>
+      <form id="register-form" class="auth-form" style="display:none">
+        <input id="reg-name" placeholder="Имя" required>
+        <input id="reg-phone" type="tel" placeholder="+79991234567">
+        <input id="reg-email" type="email" placeholder="Электронная почта" required>
+        <input id="reg-password" type="password" placeholder="Пароль (от 8)" required>
+        <label class="consent-label">
+          <input type="checkbox" id="reg-consent">
+          Согласен с обработкой и использованием персональных данных (почта, телефон)
+        </label>
+        <button type="submit" id="register">Зарегистрироваться</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Полная карточка товара -->
+  <div id="product-modal" class="modal" style="display:none" onclick="if(event.target===this)closeProductCard()">
+    <div class="modal-content" style="max-width: 760px">
+      <span class="modal-close" onclick="closeProductCard()">×</span>
+      <div id="product-card-body"></div>
+    </div>
+  </div>
+
+  <!-- Галерея фото -->
+  <div id="gallery" class="modal" style="display:none" onclick="if(event.target===this)closeGallery()">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeGallery()">×</span>
+      <div id="gallery-body"></div>
+    </div>
+  </div>
+
+  <!-- Управление пользователями -->
+  <div id="users-modal" class="modal" style="display:none" onclick="if(event.target===this)closeUsersModal()">
+    <div class="modal-content" style="max-width: 820px">
+      <span class="modal-close" onclick="closeUsersModal()">×</span>
+      <h3>Создать пользователя</h3>
+      <form id="create-user-form" class="grid-form">
+        <input name="name" placeholder="Имя" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <input name="phone" type="tel" placeholder="+79991234567">
+        <input name="password" type="password" placeholder="Пароль (от 8)" required>
+        <select name="role_id">
+          <option value="00000000-0000-0000-0000-000000000002">Клиент</option>
+          <option value="00000000-0000-0000-0000-000000000003">Менеджер</option>
+          <option value="00000000-0000-0000-0000-000000000004">Администратор</option>
+        </select>
+        <button type="submit">Создать</button>
+      </form>
+      <h3 style="margin-top: 16px">Список пользователей</h3>
+      <button id="load-users">Обновить</button>
+      <div id="users-list"></div>
+    </div>
+  </div>
+
+  <!-- Пополнение баланса -->
+  <div id="topup-modal" class="modal" style="display:none" onclick="if(event.target===this)closeTopup()">
+    <div class="modal-content" style="max-width: 380px">
+      <span class="modal-close" onclick="closeTopup()">×</span>
+      <h3>Пополнение баланса</h3>
+      <p>Текущий баланс: <b id="topup-current">0</b> ₽</p>
+      <input type="number" id="topup-amount" min="1" step="0.01" placeholder="Сумма, ₽"
+        style="width:100%; padding:8px; margin:8px 0; border:1px solid #ccc; border-radius:6px">
+      <button onclick="submitTopup()"
+        style="width:100%; padding:8px; border:none; background:#e74c3c; color:#fff; border-radius:6px; cursor:pointer">Пополнить</button>
+    </div>
+  </div>
+  <!-- Модалка отмены заказа -->
+  <div id="cancel-modal" class="modal" style="display:none" onclick="if(event.target===this)closeCancelModal()">
+    <div class="modal-content" style="max-width: 480px">
+      <span class="modal-close" onclick="closeCancelModal()">×</span>
+      <h3>Причина отмены заказа</h3>
+      <div class="cancel-reasons" id="cancel-reasons-list"></div>
+      <button onclick="submitCancel()" class="btn-danger-full">Отменить заказ</button>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="/app.js"></script>
+</body>
+
+</html>
