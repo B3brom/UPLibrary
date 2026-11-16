@@ -119,7 +119,7 @@ go run cmd\main.go
 
 # Или
 
-GOOS=windows GOARCH=amd64 go build -o app.exe
+GOOS=windows GOARCH=amd64 go build cmd\main.go
 Запустить main.exe
 
 В любом случае откроется консоль и сайт в браузере. Адрес: http://localhost:8080
